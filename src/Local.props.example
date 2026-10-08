@@ -1,0 +1,7 @@
+<Project>
+  <!-- Skopiuj jako Local.props i popraw ścieżki, jeśli masz grę lub profil gdzie indziej. -->
+  <PropertyGroup>
+    <ValheimDir>C:\Program Files (x86)\Steam\steamapps\common\Valheim</ValheimDir>
+    <ProfileDir>C:\Users\TWOJ_LOGIN\AppData\Roaming\r2modmanPlus-local\Valheim\profiles\Default</ProfileDir>
+  </PropertyGroup>
+</Project>

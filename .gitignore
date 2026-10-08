@@ -1,0 +1,17 @@
+# build
+bin/
+obj/
+dist/
+*.dll
+*.pdb
+
+# lokalne ścieżki
+src/Local.props
+
+# IDE
+.vs/
+.idea/
+.vscode/
+*.user
+*.suo
+*.DotSettings.user
