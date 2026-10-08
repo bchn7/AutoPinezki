@@ -1,83 +1,83 @@
 # AutoPinezki
 
-Mod do Valheim, który sam stawia pinezki na mapie, kiedy przechodzisz obok czegoś przydatnego.
-Krzaki z jagodami, złoża rudy, wejścia do lochów, obozy, kupcy, ołtarze bossów.
+A Valheim mod that drops pins on your map whenever you walk past something useful:
+berry bushes, ore deposits, dungeon entrances, camps, traders, boss altars.
 
-Mod działa tylko po stronie gracza. Serwer i inni gracze nie muszą go mieć.
+Pin names on the map are in broken Polish/English on purpose (`miedz ruda`, `dung krypta`, `goblin camp`).
+The config menu uses normal names, in English or Polish depending on your game language.
 
-## Jak to działa
+Client-side only. The server and other players don't need it.
 
-- Co 2 sekundy mod sprawdza, co jest w promieniu 50 m od Ciebie, i stawia pinezkę na zwykłej mapie gry.
-- Kilka takich samych rzeczy blisko siebie (domyślnie 40 m) dostaje jedną pinezkę, a nie pięć.
-- Mod zapamiętuje, co już oznaczył. Jak usuniesz pinezkę, nie wróci przy następnym przejściu.
-- Pinezek nigdy sam nie usuwa, to Twoja robota (PPM na mapie).
-- Zebrany krzak = przekreślona pinezka. Jak odrośnie i będziesz w okolicy, przekreślenie znika.
-- Z krzaków oznacza tylko to, co gra faktycznie odnawia.
+## How it works
 
-## Klawisze
+- Every 2 seconds the mod checks what's within 50 m of you and puts a pin on the regular game map.
+- Several of the same thing close together (40 m by default) share one pin instead of five.
+- The mod remembers what it already marked. If you delete a pin, it won't come back next time you pass by.
+- It never removes pins on its own. That's your job (right-click on the map).
+- Picked bush = crossed-out pin. Once it grows back and you're nearby, the cross goes away.
+- Only plants the game actually respawns get pinned.
+- Now and then a pin gets a random note, like `miedz ruda - check later`.
 
-| Klawisz | Co robi |
+## Keys
+
+| Key | What it does |
 |---|---|
-| `F7` | Oznacza to, w co celujesz (do 100 m), także rzeczy spoza listy |
-| `F8` | Włącza / wyłącza automatyczne oznaczanie |
+| `F7` | Mark whatever you're aiming at (up to 100 m), including things not on the list |
+| `F8` | Turn automatic marking on/off |
 
-W konsoli (`F5`) komenda `pinezki` pokazuje, czego ile znalazłeś.
+In the console (`F5`), `pinezki` shows how many of each thing you've found.
 
-## Co jest oznaczane
+## What gets marked
 
-**Zbieractwo:** maliny, borówki, moroszki, borówki brusznice, oset, dzika marchew / rzepa / cebula / jarmuż,
-dziki len i jęczmień, Jotun Puffs, Magecap, Smoke Puff, Fiddlehead, Vineberry, jaja voltur, royal jelly,
-smocze jaja, dzikie ule. Grzyby (zwykłe, żółte, niebieskie) też, ale domyślnie są wyłączone.
+**Gathering:** raspberries, blueberries, cloudberries, lingonberries, thistle, wild carrot / turnip / onion / kale seeds,
+wild flax and barley, Jotun Puffs, Magecap, Smoke Puff, Fiddlehead, Vineberries, volture eggs, royal jelly,
+dragon eggs, wild beehives. Mushrooms (regular, yellow, blue) too, but they're off by default.
 
-**Rudy:** miedź, cyna, srebro, żelazo z błota, obsydian, meteoryty, flametal, szczątki gigantów,
-złoto, siarka, smoła, kryształy.
+**Ores:** copper, tin, silver, iron (muddy scrap piles), obsidian, meteorites, flametal, giant remains,
+gold, sulfur, tar, crystals.
 
-**Lochy:** Burial Chamber, Sunken Crypt, Frost Cave, Infested Mine, Troll Cave, Charred Fortress, Putrid Hole.
+**Dungeons:** Burial Chamber, Sunken Crypt, Frost Cave, Infested Mine, Troll Cave, Charred Fortress, Putrid Hole.
 
-**Inne:** ołtarze bossów, Haldor, Hildir, wiedźma z bagien, runestones, obozy goblinów i greydwarfów,
-gniazda smoków, wraki.
+**Other:** boss altars, Haldor, Hildir, Bog Witch, runestones, fuling and greydwarf camps, drake nests, shipwrecks.
 
-Każdą rzecz można osobno wyłączyć w configu, np. jak w późniejszej fazie gry nie potrzebujesz już miedzi.
+Every item can be turned off on its own, e.g. once you're past the copper age.
 
-## Instalacja
+## Install
 
-1. Potrzebny jest [BepInExPack Valheim](https://thunderstore.io/c/valheim/p/denikson/BepInExPack_Valheim/).
-2. Pobierz `AutoPinezki-x.y.z.zip` z [Releases](../../releases).
-3. W r2modman: **Settings → Import local mod** i wskaż zip.
+1. You need [BepInExPack Valheim](https://thunderstore.io/c/valheim/p/denikson/BepInExPack_Valheim/).
+2. Grab `AutoPinezki-x.y.z.zip` from [Releases](../../releases).
+3. In r2modman: **Settings → Import local mod** and pick the zip.
 
-Bez menedżera modów: wrzuć `AutoPinezki.dll` do `BepInEx/plugins/AutoPinezki/`.
+Without a mod manager: drop `AutoPinezki.dll` into `BepInEx/plugins/AutoPinezki/`.
 
 ## Config
 
-Plik `BepInEx/config/bchn.autopinezki.cfg` tworzy się przy pierwszym uruchomieniu gry.
-Najwygodniej zmieniać go w grze przez [ConfigurationManager](https://thunderstore.io/c/valheim/p/cjayride/ConfigurationManager/) (`F1`),
-wtedy zmiany działają od razu.
+`BepInEx/config/bchn.autopinezki.cfg` is created the first time you start the game.
+The easiest way to change it is in-game with [ConfigurationManager](https://thunderstore.io/c/valheim/p/cjayride/ConfigurationManager/) (`F1`),
+changes apply right away.
 
-- `Range`: zasięg wykrywania (50 m)
-- `GroupRadius`: odległość, poniżej której nie stawia drugiej takiej samej pinezki (40 m)
-- `Komunikaty`: napis „Znalazłeś: …!” na ekranie
-- `Kategorie` i `Rzeczy: …`: włączniki całych kategorii i pojedynczych rzeczy
-- `Ikony`: ikona dla każdej kategorii (Icon0 ognisko, Icon1 dom, Icon2 młotek, Icon3 kropka, Icon4 portal)
-- `Notatki`: szansa, że do pinezki dojdzie dopisek w stylu `miedz ruda - check later`, oraz czy `F7`
-  na nieznanym obiekcie ma stawiać taki dopisek zamiast nazwy z gry
-- `Debug`: zapisuje w logu nazwy lokacji, których mod nie zna
+- `General`: detection range (50 m), group radius (40 m), on-screen messages, debug log of unknown locations
+- `Notes`: chance of a random note on a pin, and whether `F7` on an unknown object places a note instead of its name
+- `Keys`: toggle and mark keys
+- `Categories` and `Items: …`: on/off for whole categories and single items
+- `Icons`: icon per category (Icon0 fire, Icon1 house, Icon2 hammer, Icon3 dot, Icon4 portal)
 
-Lista oznaczonych miejsc leży w `BepInEx/config/AutoPinezki/<świat>_<postać>.txt`.
-Skasowanie pliku = mod zapomina, co już oznaczył.
+Marked spots are stored in `BepInEx/config/AutoPinezki/<world>_<character>.txt`.
+Delete the file and the mod forgets what it already marked.
 
-## Stół kartograficzny
+## Cartography table
 
-Pinezki z moda to zwykłe pinezki gry, więc stół kartograficzny przekazuje je dalej.
-Kumple zobaczą je u siebie, nawet jeśli nie mają moda.
+Pins from this mod are normal game pins, so the cartography table shares them.
+Your friends will see them even without the mod.
 
-## Budowanie
+## Building
 
-Potrzebny .NET SDK 8+, zainstalowany Valheim i profil r2modman z BepInExem.
+You need .NET SDK 8+, Valheim installed and an r2modman profile with BepInEx.
 
 ```
-cp src/Local.props.example src/Local.props   # popraw ścieżki
+cp src/Local.props.example src/Local.props   # fix the paths
 dotnet build -c Release
 ```
 
-Gotowa paczka ląduje w `dist/`. Jeśli mod jest już zaimportowany do r2modman, DLL podmienia się od razu.
-Nazwy pinezek i listę obiektów znajdziesz w `src/Targets.cs`.
+The package ends up in `dist/`. If the mod is already imported into r2modman, the DLL is replaced right away.
+Pin names and the object list live in `src/Targets.cs`.

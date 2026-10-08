@@ -1,11 +1,11 @@
 # AutoPinezki
 
-Sam stawia pinezki na mapie, kiedy przechodzisz obok krzaków z jagodami, złóż rudy, lochów, obozów,
-kupców czy ołtarzy bossów.
+Drops pins on your map when you walk past berry bushes, ore deposits, dungeons, camps,
+traders or boss altars. Pin names are in broken Polish/English on purpose.
 
-- Zasięg ok. 50 m, pobliskie takie same rzeczy dostają jedną pinezkę.
-- Nie usuwa pinezek i nie stawia ponownie tych, które sam skasujesz.
-- Zebrany krzak = przekreślona pinezka, po odrośnięciu przekreślenie znika.
-- `F7`: oznacz to, w co celujesz. `F8`: włącz / wyłącz automat. Konsola: `pinezki` = statystyki.
-- Każdą rzecz można osobno wyłączyć w configu (`bchn.autopinezki.cfg`, najwygodniej przez ConfigurationManager).
-- Tylko po stronie gracza. Pinezki da się przekazać kumplom przez stół kartograficzny.
+- Range around 50 m, nearby things of the same kind share one pin.
+- Never removes pins and never re-adds the ones you delete.
+- Picked bush = crossed-out pin, the cross goes away once it grows back.
+- `F7`: mark what you're aiming at. `F8`: toggle auto marking. Console: `pinezki` = stats.
+- Every item can be turned off in the config (`bchn.autopinezki.cfg`, easiest via ConfigurationManager). Menu in English or Polish, following the game language.
+- Client-side only. Pins can be shared with friends through the cartography table.

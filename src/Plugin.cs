@@ -9,7 +9,7 @@ using UnityEngine;
 
 namespace AutoPinezki
 {
-    [BepInPlugin("bchn.autopinezki", "AutoPinezki", "1.2.0")]
+    [BepInPlugin("bchn.autopinezki", "AutoPinezki", "1.3.0")]
     public class Plugin : BaseUnityPlugin
     {
         static Plugin I;
@@ -33,19 +33,67 @@ namespace AutoPinezki
         bool auto = true;
         readonly HashSet<string> debugSeen = new HashSet<string>();
 
+        // Menu texts per entry; swapped when the game language is known (Polish vs everything else).
+        readonly List<(ConfigurationManagerAttributes a, string secPl, string secEn, string namePl, string nameEn, string descPl, string descEn)> texts =
+            new List<(ConfigurationManagerAttributes, string, string, string, string, string, string)>();
+        static readonly FieldInfo LocalizationInstance = AccessTools.Field(typeof(Localization), "m_instance");
+        static bool pl;
+        bool langKnown;
+        float nextLangCheck;
+
+        static readonly Dictionary<Cat, (string pl, string en)> CatNames = new Dictionary<Cat, (string, string)>
+        {
+            { Cat.Zbieractwo, ("Zbieractwo", "Gathering") },
+            { Cat.Rudy, ("Rudy", "Ores") },
+            { Cat.Lochy, ("Lochy", "Dungeons") },
+            { Cat.Inne, ("Inne", "Other") },
+        };
+
+        // File keys are English and never change, so switching game language keeps your settings.
+        ConfigEntry<T> Bind<T>(string secEn, string secPl, string key, string namePl, T value,
+            string descEn, string descPl, AcceptableValueBase range = null)
+        {
+            var a = new ConfigurationManagerAttributes();
+            texts.Add((a, secPl, secEn, namePl, key, descPl, descEn));
+            return Config.Bind(secEn, key, value, new ConfigDescription(descEn, range, a));
+        }
+
+        void ApplyLanguage()
+        {
+            foreach (var t in texts)
+            {
+                t.a.Category = pl ? t.secPl : t.secEn;
+                t.a.DispName = pl ? t.namePl : t.nameEn;
+                t.a.Description = pl ? t.descPl : t.descEn;
+            }
+        }
+
+        static string T(string polish, string english) => pl ? polish : english;
+
         void Awake()
         {
             I = this;
-            Range = Config.Bind("Ogólne", "Range", 50f, "Zasięg wykrywania w metrach.");
-            GroupRadius = Config.Bind("Ogólne", "GroupRadius", 40f, "Nie stawiaj drugiej pinezki tego samego typu bliżej niż tyle metrów.");
-            Messages = Config.Bind("Ogólne", "Komunikaty", true, "Komunikat na ekranie przy nowej pinezce.");
-            NoteChance = Config.Bind("Notatki", "SzansaNotatki", 0.1f,
-                new ConfigDescription("Szansa (0-1), że do automatycznej pinezki dojdzie losowa notatka, np. \"miedz ruda - check later\".",
-                    new AcceptableValueRange<float>(0f, 1f)));
-            NotesOnF7 = Config.Bind("Notatki", "NotatkiF7", true, "F7 na obiekcie spoza listy stawia losową notatkę zamiast nazwy z gry.");
-            KeyToggle = Config.Bind("Klawisze", "KlawiszAutomat", KeyCode.F8, "Włącz/wyłącz automatyczne oznaczanie.");
-            KeyMark = Config.Bind("Klawisze", "KlawiszOznacz", KeyCode.F7, "Oznacz obiekt, w który celujesz (do 100 m).");
-            DebugLog = Config.Bind("Ogólne", "Debug", false, "Loguj nazwy nieznanych lokacji w zasięgu (BepInEx/LogOutput.log).");
+            Range = Bind("General", "Ogólne", "Range", "Zasięg", 50f,
+                "Detection range in meters.", "Zasięg wykrywania w metrach.");
+            GroupRadius = Bind("General", "Ogólne", "Group radius", "Promień grupowania", 40f,
+                "Don't place a second pin of the same kind closer than this (meters).",
+                "Nie stawiaj drugiej pinezki tego samego typu bliżej niż tyle metrów.");
+            Messages = Bind("General", "Ogólne", "Messages", "Komunikaty", true,
+                "Show a message on screen when a pin is placed.", "Komunikat na ekranie przy nowej pinezce.");
+            DebugLog = Bind("General", "Ogólne", "Debug", "Debug", false,
+                "Log names of unknown nearby locations to BepInEx/LogOutput.log.",
+                "Loguj nazwy nieznanych lokacji w zasięgu (BepInEx/LogOutput.log).");
+            NoteChance = Bind("Notes", "Notatki", "Note chance", "Szansa notatki", 0.1f,
+                "Chance (0-1) that an automatic pin gets a random note, e.g. \"miedz ruda - check later\".",
+                "Szansa (0-1), że do automatycznej pinezki dojdzie losowa notatka, np. \"miedz ruda - check later\".",
+                new AcceptableValueRange<float>(0f, 1f));
+            NotesOnF7 = Bind("Notes", "Notatki", "Notes on mark key", "Notatki pod klawiszem oznacz", true,
+                "Marking an unknown object places a random note instead of its in-game name.",
+                "Oznaczenie obiektu spoza listy stawia losową notatkę zamiast nazwy z gry.");
+            KeyToggle = Bind("Keys", "Klawisze", "Toggle key", "Klawisz automatu", KeyCode.F8,
+                "Turn automatic marking on/off.", "Włącz/wyłącz automatyczne oznaczanie.");
+            KeyMark = Bind("Keys", "Klawisze", "Mark key", "Klawisz oznacz", KeyCode.F7,
+                "Mark the object you are aiming at (up to 100 m).", "Oznacz obiekt, w który celujesz (do 100 m).");
 
             var defaultIcons = new Dictionary<Cat, Minimap.PinType>
             {
@@ -56,16 +104,27 @@ namespace AutoPinezki
             };
             foreach (var kv in defaultIcons)
             {
-                catEnabled[kv.Key] = Config.Bind("Kategorie", kv.Key.ToString(), true, "Oznaczaj kategorię " + kv.Key + ".");
-                icons[kv.Key] = Config.Bind("Ikony", kv.Key.ToString(), kv.Value, "Icon0=ognisko, Icon1=dom, Icon2=młotek, Icon3=kropka, Icon4=portal.");
+                var (cpl, cen) = CatNames[kv.Key];
+                catEnabled[kv.Key] = Bind("Categories", "Kategorie", cen, cpl, true,
+                    "Mark this whole category.", "Oznaczaj całą kategorię.");
+                icons[kv.Key] = Bind("Icons", "Ikony", cen, cpl, kv.Value,
+                    "Icon0=fire, Icon1=house, Icon2=hammer, Icon3=dot, Icon4=portal.",
+                    "Icon0=ognisko, Icon1=dom, Icon2=młotek, Icon3=kropka, Icon4=portal.");
             }
 
-            // One on/off per thing, e.g. "Rzeczy: Zbieractwo" -> "Borówki".
+            // One on/off per thing, e.g. "Items: Ores" -> "Copper" (menu: "Rzeczy: Rudy" -> "Miedź").
             var sources = Targets.Prefabs.Select(kv => new KeyValuePair<Target, string>(kv.Value, kv.Key))
                 .Concat(Targets.Locations.Select(kv => new KeyValuePair<Target, string>(kv.Value, kv.Key + "*")));
             foreach (var g in sources.GroupBy(kv => kv.Key))
-                targetEnabled[g.Key] = Config.Bind("Rzeczy: " + g.Key.Cat, g.Key.Label, !g.Key.DefaultOff,
-                    "Na mapie np.: " + string.Join(", ", g.Key.Names) + ". Obiekty w grze: " + string.Join(", ", g.Select(kv => kv.Value)));
+            {
+                var t = g.Key;
+                var (cpl, cen) = CatNames[t.Cat];
+                string names = string.Join(", ", t.Names), objects = string.Join(", ", g.Select(kv => kv.Value));
+                targetEnabled[t] = Bind("Items: " + cen, "Rzeczy: " + cpl, t.LabelEn, t.Label, !t.DefaultOff,
+                    "Pin names: " + names + ". Game objects: " + objects,
+                    "Na mapie np.: " + names + ". Obiekty w grze: " + objects);
+            }
+            ApplyLanguage();
 
             Harmony.CreateAndPatchAll(typeof(Plugin));
             Logger.LogInfo("AutoPinezki loaded");
@@ -81,18 +140,29 @@ namespace AutoPinezki
         [HarmonyPostfix, HarmonyPatch(typeof(Terminal), "InitTerminal")]
         static void OnInitTerminal()
         {
-            new Terminal.ConsoleCommand("pinezki", "statystyki AutoPinezki", (Terminal.ConsoleEvent)(args =>
+            new Terminal.ConsoleCommand("pinezki", "AutoPinezki stats", (Terminal.ConsoleEvent)(args =>
             {
-                if (I.mem == null) { args.Context.AddString("AutoPinezki: najpierw wejdź do świata."); return; }
+                if (I.mem == null) { args.Context.AddString("AutoPinezki: " + T("najpierw wejdź do świata.", "enter a world first.")); return; }
                 var stats = I.mem.Stats();
                 args.Context.AddString(stats.Count == 0
-                    ? "AutoPinezki: jeszcze nic nie znalazłeś."
+                    ? "AutoPinezki: " + T("jeszcze nic nie znalazłeś.", "nothing found yet.")
                     : "AutoPinezki: " + string.Join(", ", stats.Select(kv => kv.Key + ": " + kv.Value)));
             }));
         }
 
         void Update()
         {
+            // Game language is only known after the game's Localization exists; recheck in case it changes.
+            if (Time.unscaledTime >= nextLangCheck)
+            {
+                nextLangCheck = Time.unscaledTime + 2f;
+                if (LocalizationInstance.GetValue(null) != null)
+                {
+                    bool isPl = Localization.instance.GetSelectedLanguage() == "Polish";
+                    if (!langKnown || isPl != pl) { pl = isPl; langKnown = true; ApplyLanguage(); }
+                }
+            }
+
             var player = Player.m_localPlayer;
             var map = Minimap.instance;
             if (player == null || map == null || ZNet.instance == null) return;
@@ -103,7 +173,7 @@ namespace AutoPinezki
                 if (ZInput.GetKeyDown(KeyToggle.Value))
                 {
                     auto = !auto;
-                    Say("Automat pinezek: " + (auto ? "WŁ" : "WYŁ"));
+                    Say(T("Automat pinezek: ", "Auto pins: ") + (auto ? T("WŁ", "ON") : T("WYŁ", "OFF")));
                 }
                 if (ZInput.GetKeyDown(KeyMark.Value)) MarkLookedAt(player, map);
             }
@@ -210,13 +280,13 @@ namespace AutoPinezki
                 MarkManual(map, name, NotesOnF7.Value ? Targets.Notes : new[] { name }, Minimap.PinType.Icon3, pos);
                 return;
             }
-            Say("Nic tu nie ma do oznaczenia");
+            Say(T("Nic tu nie ma do oznaczenia", "Nothing here to mark"));
         }
 
         void MarkManual(Minimap map, string key, string[] names, Minimap.PinType icon, Vector3 pos)
         {
             // Same object (2 m) already remembered and its pin still on the map -> skip.
-            if (mem.IsNear(key, pos.x, pos.z, 2f) && FindPin(map, names, pos) != null) { Say("Już oznaczone: " + key); return; }
+            if (mem.IsNear(key, pos.x, pos.z, 2f) && FindPin(map, names, pos) != null) { Say(T("Już oznaczone: ", "Already marked: ") + key); return; }
             if (!mem.IsNear(key, pos.x, pos.z, 2f)) Remember(key, pos);
             AddPin(map, Pick(names), icon, pos);
         }
@@ -228,7 +298,7 @@ namespace AutoPinezki
         void AddPin(Minimap map, string name, Minimap.PinType icon, Vector3 pos)
         {
             map.AddPin(pos, icon, name, true, false);
-            if (Messages.Value) Say("Znalazłeś: " + name + "!");
+            if (Messages.Value) Say(T("Znalazłeś: ", "Found: ") + name + "!");
         }
 
         void Remember(string key, Vector3 pos)
@@ -252,5 +322,13 @@ namespace AutoPinezki
         {
             if (MessageHud.instance != null) MessageHud.instance.ShowMessage(MessageHud.MessageType.TopLeft, text);
         }
+    }
+
+    // Read by ConfigurationManager (F1 menu) via reflection, matched by class and field names.
+    internal sealed class ConfigurationManagerAttributes
+    {
+        public string Category;
+        public string DispName;
+        public string Description;
     }
 }

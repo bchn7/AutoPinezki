@@ -1,8 +1,8 @@
 {
   "name": "AutoPinezki",
-  "version_number": "1.2.0",
+  "version_number": "1.3.0",
   "website_url": "",
-  "description": "Automatyczne śmieszne pinezki na mapie: krzaki, rudy, lochy i lokacje w zasięgu wzroku.",
+  "description": "Automatic map pins for berry bushes, ores, dungeons and points of interest within sight.",
   "dependencies": [
     "denikson-BepInExPack_Valheim-5.4.2351"
   ]

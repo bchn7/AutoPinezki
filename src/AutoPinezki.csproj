@@ -1,11 +1,11 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <!-- Własne ścieżki wpisz w src/Local.props (nie jest w repo), wzór: src/Local.props.example -->
+  <!-- Put your own paths in src/Local.props (not in the repo), see src/Local.props.example -->
   <Import Project="Local.props" Condition="Exists('Local.props')" />
 
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
     <AssemblyName>AutoPinezki</AssemblyName>
-    <Version>1.2.0</Version>
+    <Version>1.3.0</Version>
     <LangVersion>latest</LangVersion>
     <Nullable>disable</Nullable>
     <DebugType Condition="'$(Configuration)' == 'Release'">none</DebugType>
@@ -27,12 +27,12 @@
     <Reference Include="$(ProfileDir)/BepInEx/core/0Harmony.dll" Private="false" />
   </ItemGroup>
 
-  <!-- Jeśli mod jest już zaimportowany do r2modman, podmień DLL od razu. -->
+  <!-- If the mod is already imported into r2modman, replace the DLL right away. -->
   <Target Name="CopyToProfile" AfterTargets="Build" Condition="Exists('$(PluginDir)')">
     <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(PluginDir)" />
   </Target>
 
-  <!-- Paczka Thunderstore/r2modman: dist/AutoPinezki-<wersja>.zip -->
+  <!-- Thunderstore/r2modman package: dist/AutoPinezki-<version>.zip -->
   <Target Name="ZipForR2modman" AfterTargets="Build" Condition="'$(Configuration)' == 'Release'">
     <PropertyGroup><StageDir>$(IntermediateOutputPath)package/</StageDir></PropertyGroup>
     <RemoveDir Directories="$(StageDir)" />
