@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 
 namespace AutoPinezki
 {
@@ -12,6 +13,7 @@ namespace AutoPinezki
         public readonly Cat Cat;
         public readonly string[] Names; // pin names on the map, one picked at random
         public bool DefaultOff;         // config toggle starts disabled
+        public string[] Notes = { };    // extra notes that only make sense for this thing
 
         public Target(Cat cat, string key, string label, string labelEn, params string[] names)
         {
@@ -30,7 +32,26 @@ namespace AutoPinezki
         static void P(Target t, params string[] prefabs) { foreach (var p in prefabs) Prefabs[p] = t; }
         static void L(Target t, params string[] prefixes) { foreach (var p in prefixes) Locations.Add(new KeyValuePair<string, Target>(p, t)); }
 
-        // Random notes: appended to auto pins now and then, and used by F7 for unknown objects.
+        // Random notes appended to auto pins now and then. Generic ones fit anything,
+        // category and per-target ones only where they make sense (no "probably iron" on raspberries).
+        static readonly string[] GenericNotes =
+        {
+            "go tu", "tu go", "come tutaj", "wracamy later", "back later", "return here",
+            "check this", "check later", "todo", "wip",
+        };
+
+        static readonly Dictionary<Cat, string[]> CatNotes = new Dictionary<Cat, string[]>
+        {
+            { Cat.Zbieractwo, new[] { "free loot", "darmowy loot" } },
+            { Cat.Rudy, new string[0] },
+            { Cat.Lochy, new[] { "check cave", "loot tutaj", "loot tam", "need loot", "maybe loot", "todo explore", "todo loot",
+                                 "bad idea", "zly pomysl", "dont go", "dont go tutaj", "nie isc", "fixme", "bug" } },
+            { Cat.Inne, new[] { "unknown location", "todo explore", "maybe loot" } },
+        };
+
+        public static string[] NotesFor(Target t) => GenericNotes.Concat(CatNotes[t.Cat]).Concat(t.Notes).ToArray();
+
+        // Everything, for F7 on objects the mod doesn't know.
         public static readonly string[] Notes =
         {
             "go tu", "tu go", "come tutaj", "wracamy later", "back later", "return here",
@@ -80,8 +101,9 @@ namespace AutoPinezki
 
             P(new Target(R, "copper", "Miedź", "Copper", "miedz", "miedz ruda", "copper miedz", "copper ruda"), "rock4_copper", "MineRock_Copper");
             P(new Target(R, "tin cyna", "Cyna", "Tin", "tin cyna", "tin ruda"), "MineRock_Tin", "Pickable_Tin");
-            P(new Target(R, "silwer", "Srebro", "Silver", "srebro", "silver srebro", "silver ruda", "silwer ruda"), "silvervein", "rock3_silver");
-            P(new Target(R, "ajron w błocie", "Żelazo (złom w błocie)", "Iron (muddy scrap piles)", "zelazo", "iron zelazo", "iron ruda", "iron bagno", "ajron w błocie"),
+            P(new Target(R, "silwer", "Srebro", "Silver", "srebro", "silver srebro", "silver ruda", "silwer ruda") { Notes = new[] { "need silver", "duzo srebra", "big silver", "probably silver" } }, "silvervein", "rock3_silver");
+            P(new Target(R, "ajron w błocie", "Żelazo (złom w błocie)", "Iron (muddy scrap piles)", "zelazo", "iron zelazo", "iron ruda", "iron bagno", "ajron w błocie")
+                { Notes = new[] { "need iron", "duzo iron", "big iron", "probably iron" } },
               "mudpile", "mudpile2", "Pickable_BogIronOre", "MineRock_Iron");
             P(new Target(R, "obsydjan", "Obsydian", "Obsidian", "obsydian", "obsydjan"), "MineRock_Obsidian", "Pickable_Obsidian");
             P(new Target(R, "meteoryt", "Meteoryty", "Meteorites", "meteoryt", "meteor kamien", "kamien z nieba"), "MineRock_Meteorite", "Pickable_Meteorite");
@@ -95,15 +117,15 @@ namespace AutoPinezki
             // Order matters: first matching prefix wins.
             L(new Target(D, "dung bagno", "Zatopiona krypta (Sunken Crypt)", "Sunken Crypt", "dung bagno"), "SunkenCrypt");
             L(new Target(D, "dung krypta", "Krypta (Burial Chamber)", "Burial Chamber", "dung krypta"), "Crypt");
-            L(new Target(D, "dung zimny", "Lodowa jaskinia (Frost Cave)", "Frost Cave", "dung zimny", "frost jaskinia", "frost cave", "zimna jaskinia", "jaskinia", "jaskina"), "MountainCave");
+            L(new Target(D, "dung zimny", "Lodowa jaskinia (Frost Cave)", "Frost Cave", "dung zimny", "frost jaskinia", "frost cave", "zimna jaskinia", "jaskinia", "jaskina") { Notes = new[] { "bug jaskinia" } }, "MountainCave");
             L(new Target(D, "dung dwergi", "Zainfekowana kopalnia (Infested Mine)", "Infested Mine", "dung dwergi", "infested kopalnia", "infested mine", "kopalnia robalow", "dvergr kopalnia", "dvergr mine"),
               "Mistlands_DvergrTownEntrance");
-            L(new Target(D, "trol jaskinia", "Jaskinia trolla", "Troll Cave", "trol jaskinia", "troll jaskinia", "troll cave"), "TrollCave");
+            L(new Target(D, "trol jaskinia", "Jaskinia trolla", "Troll Cave", "trol jaskinia", "troll jaskinia", "troll cave") { Notes = new[] { "fixme troll", "bug jaskinia" } }, "TrollCave");
             L(new Target(D, "spalony zamek", "Zwęglona forteca (Charred Fortress)", "Charred Fortress", "charred zamek", "charred fortress"), "CharredFortress");
             L(new Target(D, "śmierdząca dziura", "Gnijąca dziura (Putrid Hole)", "Putrid Hole", "smierdzaca dziura", "putrid dziura", "putrid hole", "dziura smrodu"), "MorgenHole");
 
             L(new Target(I, "boss tu", "Ołtarze bossów", "Boss altars", "boss tu", "boss tutaj", "tu boss", "boss altar", "boss oltarz", "boss ołtarz",
-                "boss spawn", "boss location", "boss chyba", "boss napewno", "duzy boss", "big boss"),
+                "boss spawn", "boss location", "boss chyba", "boss napewno", "duzy boss", "big boss") { Notes = new[] { "maybe boss", "todo boss" } },
               "Eikthyrnir", "GDKing", "Bonemass", "Dragonqueen", "GoblinKing", "Mistlands_DvergrBossEntrance", "FaderLocation");
             L(new Target(I, "sklepik haldora", "Haldor (kupiec)", "Haldor (trader)", "haldor sklep", "haldor shop", "haldor sklepik", "haldora"), "Vendor_BlackForest");
             L(new Target(I, "hildirka", "Hildir (kupiec)", "Hildir (trader)", "hildr oboz", "hildir oboz", "hildir camp"), "Hildir_camp");

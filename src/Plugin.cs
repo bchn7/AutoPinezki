@@ -9,7 +9,7 @@ using UnityEngine;
 
 namespace AutoPinezki
 {
-    [BepInPlugin("bchn.autopinezki", "AutoPinezki", "1.3.0")]
+    [BepInPlugin("bchn.autopinezki", "AutoPinezki", "1.3.1")]
     public class Plugin : BaseUnityPlugin
     {
         static Plugin I;
@@ -250,7 +250,7 @@ namespace AutoPinezki
             Remember(t.Key, pos);
             if (FindPin(map, t, pos) != null) return; // e.g. shared via cartography table
             string name = Pick(t.Names);
-            if (Random.value < NoteChance.Value) name += NoteSep + Pick(Targets.Notes);
+            if (Random.value < NoteChance.Value) name += NoteSep + Pick(Targets.NotesFor(t));
             AddPin(map, name, icons[t.Cat].Value, pos);
         }
 

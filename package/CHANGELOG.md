@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.3.1
+
+- Random notes now fit the pin: iron notes only on iron, boss notes only on boss altars, cave notes on dungeons. No more `maliny - probably iron`.
+
 ## 1.3.0
 
 - Config menu in English, or Polish when the game is set to Polish.
