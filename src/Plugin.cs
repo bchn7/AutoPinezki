@@ -9,13 +9,14 @@ using UnityEngine;
 
 namespace AutoPinezki
 {
-    [BepInPlugin("bchn.autopinezki", "AutoPinezki", "1.1.0")]
+    [BepInPlugin("bchn.autopinezki", "AutoPinezki", "1.2.0")]
     public class Plugin : BaseUnityPlugin
     {
         static Plugin I;
 
         ConfigEntry<float> Range, GroupRadius;
-        ConfigEntry<bool> Messages, DebugLog;
+        ConfigEntry<bool> Messages, DebugLog, NotesOnF7;
+        ConfigEntry<float> NoteChance;
         ConfigEntry<KeyCode> KeyToggle, KeyMark;
         readonly Dictionary<Cat, ConfigEntry<bool>> catEnabled = new Dictionary<Cat, ConfigEntry<bool>>();
         readonly Dictionary<Target, ConfigEntry<bool>> targetEnabled = new Dictionary<Target, ConfigEntry<bool>>();
@@ -38,6 +39,10 @@ namespace AutoPinezki
             Range = Config.Bind("Ogólne", "Range", 50f, "Zasięg wykrywania w metrach.");
             GroupRadius = Config.Bind("Ogólne", "GroupRadius", 40f, "Nie stawiaj drugiej pinezki tego samego typu bliżej niż tyle metrów.");
             Messages = Config.Bind("Ogólne", "Komunikaty", true, "Komunikat na ekranie przy nowej pinezce.");
+            NoteChance = Config.Bind("Notatki", "SzansaNotatki", 0.1f,
+                new ConfigDescription("Szansa (0-1), że do automatycznej pinezki dojdzie losowa notatka, np. \"miedz ruda - check later\".",
+                    new AcceptableValueRange<float>(0f, 1f)));
+            NotesOnF7 = Config.Bind("Notatki", "NotatkiF7", true, "F7 na obiekcie spoza listy stawia losową notatkę zamiast nazwy z gry.");
             KeyToggle = Config.Bind("Klawisze", "KlawiszAutomat", KeyCode.F8, "Włącz/wyłącz automatyczne oznaczanie.");
             KeyMark = Config.Bind("Klawisze", "KlawiszOznacz", KeyCode.F7, "Oznacz obiekt, w który celujesz (do 100 m).");
             DebugLog = Config.Bind("Ogólne", "Debug", false, "Loguj nazwy nieznanych lokacji w zasięgu (BepInEx/LogOutput.log).");
@@ -55,12 +60,12 @@ namespace AutoPinezki
                 icons[kv.Key] = Config.Bind("Ikony", kv.Key.ToString(), kv.Value, "Icon0=ognisko, Icon1=dom, Icon2=młotek, Icon3=kropka, Icon4=portal.");
             }
 
-            // One on/off per thing, e.g. "Rzeczy: Zbieractwo" -> "boruwki".
+            // One on/off per thing, e.g. "Rzeczy: Zbieractwo" -> "Borówki".
             var sources = Targets.Prefabs.Select(kv => new KeyValuePair<Target, string>(kv.Value, kv.Key))
                 .Concat(Targets.Locations.Select(kv => new KeyValuePair<Target, string>(kv.Value, kv.Key + "*")));
             foreach (var g in sources.GroupBy(kv => kv.Key))
-                targetEnabled[g.Key] = Config.Bind("Rzeczy: " + g.Key.Cat, g.Key.Key, true,
-                    "Oznaczaj: " + string.Join(", ", g.Select(kv => kv.Value)));
+                targetEnabled[g.Key] = Config.Bind("Rzeczy: " + g.Key.Cat, g.Key.Label, !g.Key.DefaultOff,
+                    "Na mapie np.: " + string.Join(", ", g.Key.Names) + ". Obiekty w grze: " + string.Join(", ", g.Select(kv => kv.Value)));
 
             Harmony.CreateAndPatchAll(typeof(Plugin));
             Logger.LogInfo("AutoPinezki loaded");
@@ -174,7 +179,9 @@ namespace AutoPinezki
             if (mem.IsNear(t.Key, pos.x, pos.z, GroupRadius.Value)) return;
             Remember(t.Key, pos);
             if (FindPin(map, t, pos) != null) return; // e.g. shared via cartography table
-            AddPin(map, t.Names[Random.Range(0, t.Names.Length)], icons[t.Cat].Value, pos);
+            string name = Pick(t.Names);
+            if (Random.value < NoteChance.Value) name += NoteSep + Pick(Targets.Notes);
+            AddPin(map, name, icons[t.Cat].Value, pos);
         }
 
         void MarkLookedAt(Player player, Minimap map)
@@ -199,7 +206,8 @@ namespace AutoPinezki
                 if (string.IsNullOrEmpty(name) && view != null) name = Utils.GetPrefabName(view.gameObject);
                 if (string.IsNullOrEmpty(name)) break; // terrain, rocks, etc.
                 Vector3 pos = view != null ? view.transform.position : hit.point;
-                MarkManual(map, name, new[] { name }, Minimap.PinType.Icon3, pos);
+                // Key stays the game name (memory); the pin shows a random note if enabled.
+                MarkManual(map, name, NotesOnF7.Value ? Targets.Notes : new[] { name }, Minimap.PinType.Icon3, pos);
                 return;
             }
             Say("Nic tu nie ma do oznaczenia");
@@ -207,10 +215,15 @@ namespace AutoPinezki
 
         void MarkManual(Minimap map, string key, string[] names, Minimap.PinType icon, Vector3 pos)
         {
-            if (FindPin(map, names, pos) != null) { Say("Już oznaczone: " + key); return; }
-            if (!mem.IsNear(key, pos.x, pos.z, GroupRadius.Value)) Remember(key, pos);
-            AddPin(map, names[Random.Range(0, names.Length)], icon, pos);
+            // Same object (2 m) already remembered and its pin still on the map -> skip.
+            if (mem.IsNear(key, pos.x, pos.z, 2f) && FindPin(map, names, pos) != null) { Say("Już oznaczone: " + key); return; }
+            if (!mem.IsNear(key, pos.x, pos.z, 2f)) Remember(key, pos);
+            AddPin(map, Pick(names), icon, pos);
         }
+
+        const string NoteSep = " - ";
+
+        static string Pick(string[] arr) => arr[Random.Range(0, arr.Length)];
 
         void AddPin(Minimap map, string name, Minimap.PinType icon, Vector3 pos)
         {
@@ -224,13 +237,15 @@ namespace AutoPinezki
             File.AppendAllText(memPath, Memory.Line(key, pos.x, pos.z) + "\n");
         }
 
-        Minimap.PinData FindPin(Minimap map, Target t, Vector3 pos) => FindPin(map, t.Names, pos);
+        // Key included so pins placed under older names still match.
+        Minimap.PinData FindPin(Minimap map, Target t, Vector3 pos) => FindPin(map, t.Names.Append(t.Key).ToArray(), pos);
 
         Minimap.PinData FindPin(Minimap map, string[] names, Vector3 pos)
         {
             var pins = (List<Minimap.PinData>)PinsField.GetValue(map);
             float r = GroupRadius.Value;
-            return pins.FirstOrDefault(p => p.m_save && names.Contains(p.m_name) && Utils.DistanceXZ(p.m_pos, pos) < r);
+            return pins.FirstOrDefault(p => p.m_save && Utils.DistanceXZ(p.m_pos, pos) < r
+                && names.Any(n => p.m_name == n || p.m_name.StartsWith(n + NoteSep)));
         }
 
         static void Say(string text)

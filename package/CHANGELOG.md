@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.2.0
+
+- Nowe nazwy pinezek, w menu configu normalne nazwy.
+- Grzyby wracają z własnym włącznikiem (domyślnie wyłączone).
+- Losowe notatki na pinezkach (np. `miedz ruda - check later`) i pod F7 dla nieznanych obiektów.
+
 ## 1.1.0
 
 - Osobny włącznik w configu dla każdej rzeczy (np. same borówki albo sama miedź).

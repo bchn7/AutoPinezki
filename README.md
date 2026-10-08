@@ -3,9 +3,6 @@
 Mod do Valheim, który sam stawia pinezki na mapie, kiedy przechodzisz obok czegoś przydatnego.
 Krzaki z jagodami, złoża rudy, wejścia do lochów, obozy, kupcy, ołtarze bossów.
 
-Nazwy pinezek są celowo głupie i pisane z błędami: `boruwki`, `copper`, `dung krypta`,
-`obuz goblinuw`, `śmierdząca dziura`. Każda rzecz ma kilka wersji nazwy losowanych przy stawianiu.
-
 Mod działa tylko po stronie gracza. Serwer i inni gracze nie muszą go mieć.
 
 ## Jak to działa
@@ -30,7 +27,7 @@ W konsoli (`F5`) komenda `pinezki` pokazuje, czego ile znalazłeś.
 
 **Zbieractwo:** maliny, borówki, moroszki, borówki brusznice, oset, dzika marchew / rzepa / cebula / jarmuż,
 dziki len i jęczmień, Jotun Puffs, Magecap, Smoke Puff, Fiddlehead, Vineberry, jaja voltur, royal jelly,
-smocze jaja, dzikie ule.
+smocze jaja, dzikie ule. Grzyby (zwykłe, żółte, niebieskie) też, ale domyślnie są wyłączone.
 
 **Rudy:** miedź, cyna, srebro, żelazo z błota, obsydian, meteoryty, flametal, szczątki gigantów,
 złoto, siarka, smoła, kryształy.
@@ -61,6 +58,8 @@ wtedy zmiany działają od razu.
 - `Komunikaty`: napis „Znalazłeś: …!” na ekranie
 - `Kategorie` i `Rzeczy: …`: włączniki całych kategorii i pojedynczych rzeczy
 - `Ikony`: ikona dla każdej kategorii (Icon0 ognisko, Icon1 dom, Icon2 młotek, Icon3 kropka, Icon4 portal)
+- `Notatki`: szansa, że do pinezki dojdzie dopisek w stylu `miedz ruda - check later`, oraz czy `F7`
+  na nieznanym obiekcie ma stawiać taki dopisek zamiast nazwy z gry
 - `Debug`: zapisuje w logu nazwy lokacji, których mod nie zna
 
 Lista oznaczonych miejsc leży w `BepInEx/config/AutoPinezki/<świat>_<postać>.txt`.

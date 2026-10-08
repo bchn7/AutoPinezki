@@ -1,7 +1,7 @@
 # AutoPinezki
 
 Sam stawia pinezki na mapie, kiedy przechodzisz obok krzaków z jagodami, złóż rudy, lochów, obozów,
-kupców czy ołtarzy bossów. Nazwy celowo głupie: `boruwki`, `copper`, `dung krypta`, `obuz goblinuw`.
+kupców czy ołtarzy bossów.
 
 - Zasięg ok. 50 m, pobliskie takie same rzeczy dostają jedną pinezkę.
 - Nie usuwa pinezek i nie stawia ponownie tych, które sam skasujesz.
